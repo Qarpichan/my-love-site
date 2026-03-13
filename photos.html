@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>사진 — SPARK!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700;1,900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --olive: rgba(91,95,70,0.88);
+      --pink: #edadb5;
+      --bg: #faf7f2;
+      --text-dark: #2a2018;
+      --text-mid: #7a6a58;
+      --text-light: #b0a090;
+      --navbar-h: 48px;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; min-height:100%;
+      font-family: 'Gowun Batang', serif;
+      background:
+        radial-gradient(circle at 20% 10%, #fff3f6 0%, transparent 40%),
+        radial-gradient(circle at 80% 90%, #fff7e8 0%, transparent 40%),
+        #faf7f2;
+      overflow-x: hidden;
+    }
+    #navbar {
+      position: fixed; top:0; left:0; right:0;
+      height: var(--navbar-h);
+      background: var(--olive);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 100;
+    }
+    #nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; font-weight:900; font-style:italic;
+      color: #e8e4d0; letter-spacing:.05em; text-decoration:none;
+    }
+    #nav-logo:hover { opacity:.7; }
+    #nav-back { font-size:.8rem; color:rgba(232,228,208,0.7); text-decoration:none; transition:opacity .2s; }
+    #nav-back:hover { opacity:1; color:#e8e4d0; }
+ 
+    #content {
+      padding-top: calc(var(--navbar-h) + 64px);
+      padding-bottom: 120px;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    #page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.5rem, 9vw, 8rem);
+      font-weight: 900; font-style: italic;
+      color: var(--text-dark);
+      line-height: 0.95;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+    #page-title .accent { color: var(--pink); }
+    #page-sub {
+      font-size: .9rem;
+      color: var(--text-mid);
+      max-width: 420px;
+      line-height: 1.8;
+      margin-bottom: 60px;
+    }
+ 
+    #photo-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+      row-gap: 52px;
+      align-items: start;
+    }
+ 
+    .photo-card { display:flex; flex-direction:column; gap:12px; cursor:pointer; opacity:0; transform:translateY(40px); transition:all .8s cubic-bezier(.2,.8,.2,1); }
+    .photo-card.show { opacity:1; transform:translateY(0); }
+    .photo-card:hover .photo-img-wrap img { transform: scale(1.04); }
+ 
+    .col-4  { grid-column: span 4; }
+    .col-5  { grid-column: span 5; }
+    .col-6  { grid-column: span 6; }
+    .col-7  { grid-column: span 7; }
+    .col-8  { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+ 
+    .photo-img-wrap { width:100%; overflow:hidden; background:#e8e0d8; position:relative; }
+    .photo-img-wrap::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,0.15));
+      opacity:0;
+      transition:opacity .4s;
+    }
+    .photo-card:hover .photo-img-wrap::after { opacity:1; }
+    .ratio-portrait  { aspect-ratio: 3/4; }
+    .ratio-tall      { aspect-ratio: 2/3; }
+    .ratio-square    { aspect-ratio: 1/1; }
+    .ratio-landscape { aspect-ratio: 4/3; }
+    .ratio-wide      { aspect-ratio: 16/9; }
+ 
+    .photo-img-wrap img {
+      width:100%; height:100%; object-fit:cover; display:block;
+      transition: transform .7s cubic-bezier(0.4,0,0.2,1);
+    }
+    .photo-meta { display:flex; flex-direction:column; gap:4px; }
+    .photo-date {
+      font-family:'Playfair Display',serif; font-style:italic;
+      font-size:.75rem; color:var(--text-light); letter-spacing:.04em;
+    }
+    .photo-caption { font-size:.85rem; color:var(--text-mid); line-height:1.65; }
+ 
+    /* 뷰어 */
+    #viewer {
+      position:fixed; inset:0;
+      background:rgba(18,12,8,0.93);
+      z-index:300;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none;
+      transition:opacity .3s ease;
+    }
+    #viewer.show { opacity:1; pointer-events:all; }
+    #viewer-img {
+      max-width:88vw; max-height:82vh;
+      object-fit:contain; border-radius:2px;
+      box-shadow:0 32px 80px rgba(0,0,0,0.5);
+      transition:opacity .2s;
+    }
+    #viewer-info {
+      position:absolute; bottom:36px; left:50%;
+      transform:translateX(-50%); text-align:center;
+      max-width: 70vw;
+    }
+    #viewer-caption-text { font-size:.95rem; color:rgba(255,255,255,0.85); margin-bottom:4px; line-height:1.6; }
+    #viewer-date-text {
+      font-family:'Playfair Display',serif; font-style:italic;
+      font-size:.78rem; color:rgba(255,255,255,0.4);
+    }
+    #viewer-close {
+      position:absolute; top:24px; right:28px;
+      font-size:1.4rem; color:rgba(255,255,255,0.5);
+      cursor:pointer; background:none; border:none; transition:color .2s;
+    }
+    #viewer-close:hover { color:#fff; }
+    #viewer-prev, #viewer-next {
+      position:absolute; top:50%; transform:translateY(-50%);
+      font-size:2rem; color:rgba(255,255,255,0.35);
+      cursor:pointer; background:none; border:none;
+      padding:16px; transition:color .2s;
+    }
+    #viewer-prev { left:12px; }
+    #viewer-next { right:12px; }
+    #viewer-count {
+      position:absolute; top:24px; left:28px;
+      font-size:.8rem; color:rgba(255,255,255,0.5);
+    }
+    #viewer-prev:hover, #viewer-next:hover { color:#fff; }
+ 
+    /* 로그인 안내 */
+    #login-notice {
+      position: fixed; inset: 0;
+      background: rgba(250,247,242,0.97);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; z-index: 200;
+      font-family: 'Gowun Batang', serif;
+      color: var(--text-mid);
+    }
+    #login-notice .lock-icon { font-size: 2.4rem; }
+    #login-notice p { font-size: .95rem; }
+    #go-login-btn {
+      margin-top: 6px; padding: 9px 32px;
+      border: none; border-radius: 999px;
+      background: var(--pink); color: #fff;
+      font-family: 'Gowun Batang', serif;
+      font-size: .9rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s;
+    }
+    #go-login-btn:hover { opacity: .8; }
+ 
+    /* ── 모바일 ── */
+    @media(max-width:700px){
+      #content {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: calc(var(--navbar-h) + 32px);
+      }
+      #photo-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        row-gap: 28px;
+      }
+      /* 모바일에서는 큰 카드 절반으로 */
+      .col-8  { grid-column: span 6; }
+      .col-7  { grid-column: span 6; }
+      .col-5  { grid-column: span 6; }
+      .col-4  { grid-column: span 3; }
+      .col-6  { grid-column: span 6; }
+      .col-12 { grid-column: span 6; }
+      #page-sub { margin-bottom: 32px; }
+      /* 뷰어 네비 버튼 키우기 */
+      #viewer-prev, #viewer-next { font-size:1.5rem; padding:12px 10px; }
+    }
+  </style>
+</head>
+<body>
+ 
+  <nav id="navbar">
+    <a id="nav-logo" href="index.html">SPARK!</a>
+    <a id="nav-back" href="index.html">← 돌아가기</a>
+  </nav>
+ 
+  <!-- 로그인 안내 -->
+  <div id="login-notice">
+    <span class="lock-icon">🔒</span>
+    <p>사진을 보려면 로그인이 필요해요</p>
+    <button id="go-login-btn" onclick="window.location.href='index.html'">로그인 하러 가기</button>
+  </div>
+ 
+  <div id="viewer" onclick="handleViewerClick(event)">
+    <button id="viewer-close" onclick="closeViewer()">✕</button>
+    <div id="viewer-count"></div>
+    <button id="viewer-prev" onclick="changePhoto(-1)">‹</button>
+    <img id="viewer-img" src="" alt=""/>
+    <button id="viewer-next" onclick="changePhoto(1)">›</button>
+    <div id="viewer-info">
+      <div id="viewer-caption-text"></div>
+      <div id="viewer-date-text"></div>
+    </div>
+  </div>
+ 
+  <div id="content">
+    <h1 id="page-title">Our<br/><span class="accent">Memories.</span></h1>
+    <p id="page-sub">바다에 보이는 지평선에 닿을 때까지 사랑하자.</p>
+    <div id="photo-grid"></div>
+  </div>
+ 
+  <script>
+    /* =====================================================
+       사진 정보
+       src    : 'photos/파일명'
+       date   : '날짜'
+       caption: '캡션'
+       col    : 4 / 5 / 6 / 7 / 8 / 12
+       ratio  : 'portrait' | 'tall' | 'square' | 'landscape' | 'wide'
+    ===================================================== */
+    const PHOTOS = [
+      {
+        src: 'photos/photo01.jpg',
+        date: '',
+        caption: '현지가 처음 본 내 사진',
+        col: 5, ratio: 'square'
+      },
+      {
+        src: 'photos/photo02.jpg',
+        date: '',
+        caption: '내가 (아마도) 처음 받은 현지 사진 중 하나',
+        col: 7, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo03.jpg',
+        date: '',
+        caption: '현지가 처음 촬영 허락해준 사진 🐻',
+        col: 5, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo04.jpg',
+        date: '',
+        caption: '세 번째 술 마셨을 때 제조한 파워밀키소주 🍹',
+        col: 7, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo05.jpg',
+        date: '',
+        caption: '많은 사람들이 좋아한 현지의 멋진 나시 사진!\n현지의 타고난 몸매와 비율, 그리고 분위기를 한눈에 볼 수 있는 사진 ✨',
+        col: 4, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo06.jpg',
+        date: '',
+        caption: '태어나서 처음 현지에게 보여준 내 복부 😳',
+        col: 4, ratio: 'square'
+      },
+      {
+        src: 'photos/photo07.jpg',
+        date: '',
+        caption: '예쁜 현지의 고화질 사진 🌟',
+        col: 6, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo08.jpg',
+        date: '',
+        caption: '현지에게 나를 보여주고 싶어 찍은 CCTV 샷 📹',
+        col: 6, ratio: 'landscape'
+      },
+      {
+        src: 'photos/photo09.jpg',
+        date: '',
+        caption: '내가 제일 좋아하는 현지의 귀여운 광각 사진 🪐',
+        col: 6, ratio: 'square'
+      },
+      {
+        src: 'photos/photo10.jpg',
+        date: '',
+        caption: '우리가 처음 만난 날, 바다 위 영롱하게 빛나던 달 🌕',
+        col: 6, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo11.jpg',
+        date: '',
+        caption: '내가 몰래 찍은 귀엽고 힙한 포즈의 현지 🌙',
+        col: 7, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo12.jpg',
+        date: '',
+        caption: '우리 둘이 처음 카페에서 같이 찍은 사진 ☕',
+        col: 5, ratio: 'landscape'
+      },
+      {
+        src: 'photos/photo13.jpg',
+        date: '',
+        caption: '현지가 찍어준 나 (무서워) 😂',
+        col: 6, ratio: 'landscape'
+      },
+      {
+        src: 'photos/photo14.jpg',
+        date: '',
+        caption: '현지가 선물해준 100일 선물 디퓨저 🕯️\n이런 연애도, 이런 사랑도 모두 처음이라 서툴렀지만,\n그럼에도 옆에 있어줘서 고맙고 사랑해.',
+        col: 6, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo15.jpg',
+        date: '',
+        caption: '편안하게 항생제 맞는 나 💉',
+        col: 7, ratio: 'landscape'
+      },
+      {
+        src: 'photos/photo16.jpg',
+        date: '',
+        caption: '현지가 그려준 나 그림!\n그림 스타일도 너무 귀엽고 열심히 그려준 것 같아서 너무 좋았어 🎨',
+        col: 5, ratio: 'square'
+      },
+      {
+        src: 'photos/photo17.jpg',
+        date: '',
+        caption: '현지가 그려준 그림 2 — 오이가 되다 🥒',
+        col: 5, ratio: 'square'
+      },
+      {
+        src: 'photos/photo18.jpg',
+        date: '',
+        caption: '또 이쁜 현지, 이 사진은 완전 여우 같아요 🦊',
+        col: 7, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo19.jpg',
+        date: '',
+        caption: '현지의 짧아도 예쁜 숏컷 사진 ✂️',
+        col: 6, ratio: 'square'
+      },
+      {
+        src: 'photos/photo20.jpg',
+        date: '',
+        caption: '현지가 나 같다고 한 오징오징어 🦑',
+        col: 6, ratio: 'square'
+      },
+      {
+        src: 'photos/photo21.jpg',
+        date: '',
+        caption: '내가 바라보는 현지 🌸',
+        col: 6, ratio: 'square'
+      },
+      {
+        src: 'photos/photo22.jpg',
+        date: '',
+        caption: '현지가 바라보는 나 🐺',
+        col: 6, ratio: 'square'
+      },
+      {
+        src: 'photos/photo23.jpg',
+        date: '',
+        caption: '언제나 빛나고 예쁜 현지의 브이 셀카 ✌️',
+        col: 5, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo24.jpg',
+        date: '',
+        caption: '현지가 그려준 너무 예쁘고 소중한, 마치 현지 같은 은방울꽃 그림 🌼',
+        col: 7, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo25.jpg',
+        date: '',
+        caption: '현지가 그려준 언제나 지니고 다니는 든든한 행운의 부적 🍀',
+        col: 4, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo26.jpg',
+        date: '',
+        caption: '열심히 그려준 보석 같은 무언가 💎',
+        col: 4, ratio: 'square'
+      },
+      {
+        src: 'photos/photo27.jpg',
+        date: '',
+        caption: '현지가 걸으며 찍어준 너무 귀여운 사진 🧢',
+        col: 4, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo28.jpg',
+        date: '',
+        caption: '현지가 좋아하는 젤리 목록 🍬\n이걸 공부해야겠어',
+        col: 5, ratio: 'portrait'
+      },
+      {
+        src: 'photos/photo29.jpg',
+        date: '',
+        caption: '현지가 그려준 우리 🐱🐶\n너무 귀여워! 진짜 저렇게 해버리고 싶어, 사랑해! 💕',
+        col: 7, ratio: 'square'
+      },
+    ];
+ 
+    let currentIdx = 0;
+ 
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('show');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {threshold: 0.1, rootMargin: '0px 0px -40px 0px'});
+ 
+    function buildGrid() {
+      const grid = document.getElementById('photo-grid');
+      PHOTOS.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = `photo-card col-${p.col}`;
+        card.style.transitionDelay = `${(i % 4) * 0.08}s`;
+        card.onclick = () => openViewer(i);
+        card.innerHTML = `
+          <div class="photo-img-wrap ratio-${p.ratio}">
+            <img src="${p.src}" alt="${p.caption || ''}" loading="lazy"/>
+          </div>
+          <div class="photo-meta">
+            ${p.date    ? `<span class="photo-date">${p.date}</span>` : ''}
+            ${p.caption ? `<span class="photo-caption">${p.caption.replace(/\n/g,'<br/>')}</span>` : ''}
+          </div>`;
+        grid.appendChild(card);
+        observer.observe(card);
+      });
+    }
+ 
+    function openViewer(idx) {
+      currentIdx = idx;
+      updateViewer();
+      document.getElementById('viewer').classList.add('show');
+    }
+ 
+    function updateViewer() {
+      const p = PHOTOS[currentIdx];
+      const img = document.getElementById('viewer-img');
+      img.style.opacity = 0;
+      img.src = p.src;
+      img.onload = () => img.style.opacity = 1;
+      document.getElementById('viewer-caption-text').innerHTML = p.caption ? p.caption.replace(/\n/g,'<br/>') : '';
+      document.getElementById('viewer-date-text').textContent = p.date || '';
+      document.getElementById('viewer-count').textContent = `${currentIdx+1} / ${PHOTOS.length}`;
+    }
+ 
+    function closeViewer() {
+      document.getElementById('viewer').classList.remove('show');
+    }
+ 
+    function changePhoto(dir) {
+      currentIdx = (currentIdx + dir + PHOTOS.length) % PHOTOS.length;
+      updateViewer();
+    }
+ 
+    function handleViewerClick(e) {
+      if (e.target.id === 'viewer') closeViewer();
+    }
+ 
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('viewer').classList.contains('show')) return;
+      if (e.key === 'ArrowLeft')  changePhoto(-1);
+      if (e.key === 'ArrowRight') changePhoto(1);
+      if (e.key === 'Escape')     closeViewer();
+    });
+ 
+    buildGrid();
+  </script>
+ 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+ 
+    const app = initializeApp({
+      apiKey: "AIzaSyArbWtIOJWfS-sWlJ4DkeLnlafJhAy2zH0",
+      authDomain: "forhyunzi.firebaseapp.com",
+      projectId: "forhyunzi",
+      storageBucket: "forhyunzi.firebasestorage.app",
+      messagingSenderId: "638378869535",
+      appId: "1:638378869535:web:b08fcd78e174061ba6662a"
+    });
+ 
+    const auth = getAuth(app);
+    const notice = document.getElementById('login-notice');
+ 
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        notice.style.display = 'none';
+      } else {
+        notice.style.display = 'flex';
+      }
+    });
+  </script>
+</body>
+</html>
+ 

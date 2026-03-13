@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>편지 — SPARK!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Playfair+Display:ital,wght@0,400;1,400;1,700;1,900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg-from: #fff6f8;
+      --bg-to:   #fffdf5;
+      --olive:   rgba(91,95,70,0.88);
+      --pink:    #edadb5;
+      --text:    #3a2e28;
+      --mid:     #8a7a70;
+      --light:   #c0b0a8;
+      --navbar-h: 48px;
+    }
+ 
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+ 
+    html, body {
+      width:100%; min-height:100%;
+      font-family: 'Gowun Batang', serif;
+      background: linear-gradient(180deg, var(--bg-from), var(--bg-to));
+      overflow-x: hidden;
+      color: var(--text);
+    }
+ 
+    /* ── 네비바 ── */
+    #navbar {
+      position: fixed; top:0; left:0; right:0;
+      height: var(--navbar-h);
+      background: var(--olive);
+      display: flex; align-items:center; justify-content:space-between;
+      padding: 0 24px; z-index: 100;
+    }
+    #nav-logo {
+      font-family:'Playfair Display',serif; font-size:1.2rem;
+      font-weight:900; font-style:italic;
+      color:#e8e4d0; text-decoration:none; letter-spacing:.05em;
+    }
+    #nav-logo:hover { opacity:.7; }
+    #nav-back { font-size:.8rem; color:rgba(232,228,208,0.7); text-decoration:none; transition:opacity .2s; }
+    #nav-back:hover { opacity:1; color:#e8e4d0; }
+ 
+    /* ── 로그인 안내 ── */
+    #login-notice {
+      position:fixed; inset:0;
+      background:rgba(255,246,248,0.97);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:14px; z-index:200;
+      font-family:'Gowun Batang',serif; color:var(--mid);
+    }
+    #login-notice .lock-icon { font-size:2.4rem; }
+    #login-notice p { font-size:.95rem; }
+    #go-login-btn {
+      margin-top:6px; padding:9px 32px;
+      border:none; border-radius:999px;
+      background:var(--pink); color:#fff;
+      font-family:'Gowun Batang',serif; font-size:.9rem; font-weight:700;
+      cursor:pointer; transition:opacity .2s;
+    }
+    #go-login-btn:hover { opacity:.8; }
+ 
+    /* ── 꽃잎 ── */
+    .petal {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.1rem;
+      opacity: 0;
+      z-index: 5;
+      animation: petalFall linear forwards;
+    }
+    @keyframes petalFall {
+      0%   { opacity:0;   transform: translateY(-20px) rotate(0deg); }
+      10%  { opacity:.85; }
+      90%  { opacity:.6; }
+      100% { opacity:0;   transform: translateY(110vh) rotate(360deg); }
+    }
+ 
+    /* ── 봉투 화면 ── */
+    #envelope-scene {
+      min-height: 100vh;
+      display: flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding-top: var(--navbar-h);
+      gap: 28px;
+    }
+ 
+    #envelope-wrap {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+ 
+    /* 봉투 본체 */
+    #envelope {
+      width: 260px; height: 170px;
+      background: linear-gradient(160deg, #fdeef0, #fdf5e4);
+      border-radius: 6px;
+      box-shadow: 0 8px 40px rgba(180,120,120,0.18), 0 2px 8px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: visible;
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    #envelope-wrap:hover #envelope {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 56px rgba(180,120,120,0.22), 0 4px 12px rgba(0,0,0,0.08);
+    }
+ 
+    /* 봉투 플랩 (뚜껑) */
+    #envelope-flap {
+      position:absolute; top:0; left:0;
+      width:100%; height:50%;
+      transform-origin: top center;
+      transition: transform .6s cubic-bezier(.4,0,.2,1);
+      z-index: 3;
+    }
+    #envelope-flap svg { width:100%; height:100%; }
+ 
+    /* 봉투 안쪽 삼각형 */
+    #envelope::before {
+      content:'';
+      position:absolute; bottom:0; left:0;
+      width:0; height:0;
+      border-left: 130px solid transparent;
+      border-right: 130px solid transparent;
+      border-bottom: 85px solid #f5e0e4;
+      z-index: 1;
+    }
+    #envelope::after {
+      content:'';
+      position:absolute; top:0; left:0;
+      width:0; height:0;
+      border-left: 130px solid transparent;
+      border-right: 130px solid transparent;
+      border-top: 88px solid #fce8ed;
+      z-index: 1;
+      opacity:.5;
+    }
+ 
+    /* 봉투 열림 상태 */
+    #envelope-wrap.open #envelope-flap {
+      transform: rotateX(180deg);
+    }
+ 
+    /* 봉투 봉인 스티커 */
+    #seal {
+      position:absolute; top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      width:36px; height:36px;
+      background: var(--pink);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; z-index:4;
+      box-shadow: 0 2px 8px rgba(237,173,181,0.5);
+      transition: opacity .3s, transform .3s;
+    }
+    #envelope-wrap.open #seal { opacity:0; transform:translate(-50%,-50%) scale(0); }
+ 
+    /* 편지지 (봉투 안) */
+    #letter-paper {
+      position:absolute;
+      bottom: 8px; left:50%;
+      transform: translateX(-50%) translateY(0);
+      width: 220px; height: 140px;
+      background: #fffaf3;
+      border-radius:3px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      z-index: 2;
+      display:flex; align-items:center; justify-content:center;
+      transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .5s;
+      opacity:0;
+    }
+    #letter-paper span {
+      font-size:.72rem; color:var(--light); letter-spacing:.06em;
+    }
+    #envelope-wrap.open #letter-paper {
+      opacity:1;
+    }
+ 
+    /* 클릭 힌트 */
+    #hint {
+      font-size:.82rem; color:var(--mid);
+      letter-spacing:.04em; text-align:center;
+      animation: hintPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes hintPulse {
+      0%,100% { opacity:.5; }
+      50%      { opacity:1; }
+    }
+    #envelope-wrap.open ~ #hint { opacity:0; pointer-events:none; }
+ 
+    /* ── 편지 페이지 ── */
+    #letter-page {
+      display: none;
+      min-height: 100vh;
+      padding: calc(var(--navbar-h) + 60px) 24px 120px;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    #letter-page.show {
+      display: flex;
+    }
+ 
+    #letter-content {
+      background: #fffaf3;
+      border-radius: 6px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+      padding: 60px 70px;
+      max-width: 720px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: all .8s cubic-bezier(.2,.8,.2,1);
+      position: relative;
+    }
+    #letter-content.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+ 
+    /* 편지지 줄 */
+    #letter-content::before {
+      content:'';
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 34px,
+        rgba(237,173,181,0.12) 34px,
+        rgba(237,173,181,0.12) 35px
+      );
+      border-radius:6px;
+      pointer-events:none;
+    }
+ 
+    .letter-to {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: var(--text);
+    }
+ 
+    .letter-body {
+      font-family: 'Gowun Batang', serif;
+      font-size: 1rem;
+      line-height: 1.9;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+ 
+    .letter-closing {
+      font-size: 1.2rem;
+      margin-top: 40px;
+      font-weight: 700;
+      color: #c0506a;
+    }
+ 
+    .letter-date {
+      font-size: .75rem;
+      opacity: .5;
+      margin-top: 50px;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+    }
+ 
+    /* 닫기 버튼 */
+    #close-letter {
+      position:fixed; bottom:32px; left:50%;
+      transform:translateX(-50%);
+      padding:10px 36px;
+      background:rgba(91,95,70,0.85);
+      color:#e8e4d0; border:none; border-radius:999px;
+      font-family:'Gowun Batang',serif; font-size:.88rem;
+      cursor:pointer; transition:opacity .2s;
+      z-index:10;
+      display:none;
+    }
+    #close-letter:hover { opacity:.8; }
+    #close-letter.show { display:block; }
+ 
+    /* ── 모바일 ── */
+    @media(max-width:700px){
+      #letter-view {
+        padding: calc(var(--navbar-h) + 24px) 12px 60px;
+      }
+      #letter-paper {
+        padding: 40px 24px;
+        max-width: 100%;
+      }
+      #letter-paper p { font-size:.92rem; }
+      #letter-paper .greeting { font-size:1.1rem; }
+      #letter-paper .closing  { font-size:1rem; }
+      #back-btn { bottom:20px; }
+    }
+  </style>
+</head>
+<body>
+ 
+  <nav id="navbar">
+    <a id="nav-logo" href="index.html">SPARK!</a>
+    <a id="nav-back" href="index.html">← 돌아가기</a>
+  </nav>
+ 
+  <!-- 로그인 안내 -->
+  <div id="login-notice">
+    <span class="lock-icon">🔒</span>
+    <p>편지를 읽으려면 로그인이 필요해요</p>
+    <button id="go-login-btn" onclick="window.location.href='index.html'">로그인 하러 가기</button>
+  </div>
+ 
+  <!-- 봉투 화면 -->
+  <div id="envelope-scene">
+    <div id="envelope-wrap" onclick="openEnvelope()">
+      <div id="envelope">
+        <!-- 봉투 플랩 -->
+        <div id="envelope-flap">
+          <svg viewBox="0 0 260 85" preserveAspectRatio="none">
+            <polygon points="0,0 260,0 130,85" fill="#fce8ed"/>
+            <polygon points="0,0 260,0 130,85" fill="none" stroke="rgba(237,173,181,0.3)" stroke-width="1"/>
+          </svg>
+        </div>
+        <!-- 봉인 -->
+        <div id="seal">🌸</div>
+        <!-- 봉투 안 편지지 미리보기 -->
+        <div id="letter-paper"><span>편지를 열어봐 ♡</span></div>
+      </div>
+    </div>
+    <p id="hint">봉투를 클릭하면 편지가 열려요</p>
+  </div>
+ 
+  <!-- 편지 페이지 -->
+  <div id="letter-page">
+    <div id="letter-content">
+      <div class="letter-to">To. 현지</div>
+      <div class="letter-body">현지야, 이번엔 화이트데이가 찾아왔네
+사랑하는 사람한테 사탕으로 마음을 전하는 날! 낭만적이지 않아?
+ 
+나는 현지의 특별하고 아름다운 너만이 고유한 모습이 좋아
+현지는 부드러운 오크 향이 나는 럼 주 페이스트 위에 피스타치오
+크림을 넣은 초콜릿 같아! 나도 이게 뭔 소리인진 사실 잘 모르겠어.
+ 
+우리 만나서 닿은지 얼마 안되었는데 자꾸 보고 싶어 이상하게
+현지가 딸기 모찌 찹쌀떡을 먹었던 때가 자꾸 떠올라, 그 딸기
+모찌 맛있었으려나 현지가 너무 귀여웠어 자꾸 맛있는 걸
+먹이고 싶더라.
+ 
+현지에겐 언제나 너무 고마워 현지 덕분에
+내가 채우지 못한 부분들이 차오르고 현지의 애정이 내가
+눈을 뜰 수 있게 해줘 내가 더욱 유연해지고
+더욱 성장 할 기회를 주었어 그래서 언제나 고마워
+ 
+나도 현지에게 많은걸 주고 싶어 그래서 언제나 노력할꺼야
+앞으로도 우리가 함께 할 수 있으면 좋겠어 현지랑 계속
+같이 있고 싶어 우리 더욱 성장하고 높게 나아가자</div>
+      <div class="letter-closing">사랑해 언제나 오늘도!</div>
+      <div class="letter-date">2026 White Day</div>
+    </div>
+  </div>
+ 
+  <button id="close-letter" onclick="closeLetter()">← 봉투로 돌아가기</button>
+ 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+ 
+    initializeApp({
+      apiKey: "AIzaSyArbWtIOJWfS-sWlJ4DkeLnlafJhAy2zH0",
+      authDomain: "forhyunzi.firebaseapp.com",
+      projectId: "forhyunzi",
+      storageBucket: "forhyunzi.firebasestorage.app",
+      messagingSenderId: "638378869535",
+      appId: "1:638378869535:web:b08fcd78e174061ba6662a"
+    });
+ 
+    onAuthStateChanged(getAuth(), (user) => {
+      document.getElementById('login-notice').style.display = user ? 'none' : 'flex';
+    });
+  </script>
+ 
+  <script>
+    const PETALS = ['🌸','🌷','✿','❀','🌺'];
+    let petalInterval = null;
+ 
+    function spawnPetal() {
+      const el = document.createElement('span');
+      el.className = 'petal';
+      el.textContent = PETALS[Math.floor(Math.random() * PETALS.length)];
+      el.style.left = (Math.random() * 100) + 'vw';
+      el.style.top = '-30px';
+      el.style.fontSize = (0.8 + Math.random() * 0.7) + 'rem';
+      const dur = 5 + Math.random() * 5;
+      el.style.animationDuration = dur + 's';
+      el.style.animationDelay = '0s';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+ 
+    function startPetals() {
+      if (petalInterval) return;
+      petalInterval = setInterval(spawnPetal, 350);
+    }
+ 
+    function stopPetals() {
+      clearInterval(petalInterval);
+      petalInterval = null;
+    }
+ 
+    function openEnvelope() {
+      const wrap = document.getElementById('envelope-wrap');
+      if (wrap.classList.contains('open')) return;
+      wrap.classList.add('open');
+      startPetals();
+ 
+      // 편지지가 봉투에서 살짝 올라오는 효과
+      const paper = document.getElementById('letter-paper');
+      paper.style.transform = 'translateX(-50%) translateY(-30px)';
+ 
+      // 1.2초 후 편지 페이지로 전환
+      setTimeout(() => {
+        document.getElementById('envelope-scene').style.display = 'none';
+        const lp = document.getElementById('letter-page');
+        lp.classList.add('show');
+        document.getElementById('close-letter').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('letter-content').classList.add('show');
+        }, 80);
+      }, 1200);
+    }
+ 
+    function closeLetter() {
+      stopPetals();
+      document.getElementById('letter-page').classList.remove('show');
+      document.getElementById('close-letter').classList.remove('show');
+      document.getElementById('letter-content').classList.remove('show');
+ 
+      const wrap = document.getElementById('envelope-wrap');
+      wrap.classList.remove('open');
+      document.getElementById('letter-paper').style.transform = 'translateX(-50%) translateY(0)';
+      document.getElementById('envelope-scene').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>

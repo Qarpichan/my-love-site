@@ -1,0 +1,111 @@
+body{
+
+margin:0;
+height:100vh;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+background: linear-gradient(135deg,#ff8fb1,#ffe08a);
+font-family:sans-serif;
+overflow:hidden;
+
+transition:background 1s ease;
+}
+
+body.white{
+background:white;
+}
+
+/* 시작 버튼 */
+
+#startButton{
+
+position:absolute;
+
+width:320px;
+height:90px;
+
+background:white;
+border-radius:60px;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:22px;
+cursor:pointer;
+
+transition:all 1s ease;
+
+z-index:10;   
+}
+
+#startButton.expand{
+
+width:200vw;
+height:200vh;
+
+border-radius:0;
+}
+
+/* 버튼 글씨 */
+
+#startText{
+
+transition:opacity 0.5s;
+}
+
+#startText.hide{
+opacity:0;
+}
+
+/* 메뉴 컨테이너 */
+
+#menuContainer{
+
+position:absolute;
+
+width:100vw;
+height:100vh;
+
+display:flex;
+
+opacity:0;
+
+pointer-events:none;
+}
+
+#menuContainer.show{
+
+opacity:1;
+pointer-events:auto;
+}
+
+/* 메뉴 */
+
+.menu{
+
+flex:1;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:30px;
+color:white;
+
+transform:translateX(-100%);
+transition:transform 0.8s;
+}
+
+.menu.show{
+transform:translateX(0);
+}
+/* 각각 색 */
+
+#menu1{background:#ff6b9d;}
+#menu2{background:#ff9a76;}
+#menu3{background:#ffd166;}
+#menu4{background:#6ec1ff;}
