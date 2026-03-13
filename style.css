@@ -122,8 +122,27 @@ transform:translateX(0);
 @media(max-width:700px){
 
   #grid{
-    min-width:340px;
+  min-width:340px;
   }
 
 }
+#chat-container{
+width:100%;
+overflow-x:auto;
+-webkit-overflow-scrolling:touch;
+}
 
+#chat{
+min-width:380px;
+}
+
+/* 모바일 십자말풀이 스와이프 */
+#grid-wrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+#grid{
+  min-width:420px;
+}
