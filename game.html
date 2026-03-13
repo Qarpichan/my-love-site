@@ -92,6 +92,11 @@
     }
  
     /* grid */
+    #grid-wrap{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
     #grid {
       display:inline-grid;
       grid-template-columns: repeat(11, var(--cell));
@@ -207,11 +212,18 @@
     #clue-tabs { display:none; }
  
     @media(max-width:700px){
+      #grid-wrap{
+      overflow-x:auto;
+      padding-bottom:6px;
+      }
+
+      #grid{
+        min-width:340px;
+      }
       :root { --cell:30px; }
       #header { padding:16px 16px 10px; }
       #header h1 { font-size:1.3rem; }
       #content { grid-template-columns:1fr; padding:16px 12px; gap:16px; }
-      #grid { overflow-x:auto; }
       #clues { min-width:unset; }
       #clue-tabs {
         display:flex; gap:0;
@@ -256,7 +268,9 @@
   </div>
  
   <div id="content">
-    <div id="grid"></div>
+    <div id="grid-wrap">
+      <div id="grid"></div>
+    </div>
     <div id="clues">
       <div class="clue-section">
         <h3>→ 가로</h3>
@@ -689,4 +703,5 @@ window.switchTab = function(dir, el) {
 const origFocusWord = focusWord;
 </script>
 </body>
+
 </html>
