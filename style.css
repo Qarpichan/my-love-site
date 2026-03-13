@@ -128,6 +128,7 @@ transform:translateX(0);
 }
 #chat-container{
 width:100%;
+max-width:100%;
 overflow-x:auto;
 -webkit-overflow-scrolling:touch;
 }
@@ -145,4 +146,9 @@ min-width:380px;
 
 #grid{
   min-width:420px;
+}
+
+html, body{
+  max-width:100%;
+  overflow-x:hidden;
 }
