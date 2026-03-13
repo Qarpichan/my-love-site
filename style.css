@@ -108,4 +108,20 @@ transform:translateX(0);
 #menu1{background:#ff6b9d;}
 #menu2{background:#ff9a76;}
 #menu3{background:#ffd166;}
+
 #menu4{background:#6ec1ff;}
+
+#grid-wrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+/* 모바일 */
+
+@media(max-width:700px){
+
+  #grid{
+    min-width:340px;
+  }
+
+}
